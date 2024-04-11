@@ -1,0 +1,76 @@
+{
+	"name": "easy-drizzle",
+	"version": "0.0.1",
+	"description": "Utility pack to make drizzle more convenient to use and configure",
+	"homepage": "https://github.com/kristianmandrup/easy-drizzle",
+	"bugs": "https://github.com/kristianmandrup/easy-drizzle/issues",
+	"repository": "kristianmandrup/easy-drizzle",
+	"type": "module",
+	"exports": "./build/index.js",
+	"types": "./build/index.d.ts",
+	"author": "Kristian Mandrup <kmandrup@gmail.com>",
+	"license": "MIT",
+	"keywords": [
+		"drizzle",
+		"orm",
+		"schema",
+		"utils",
+		"easy"
+	],
+	"engines": {
+		"node": "^21.7.1",
+		"npm": "^10.5.0"
+	},
+	"volta": {
+		"node": "21.7.1",
+		"npm": "10.5.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"setup": "node --import=@nitrogql/esbuild-register ./scripts/setup.ts",
+		"build": "npm run clean && npm run type:dts && npm run type:extract && npm run build:src",
+		"build:src": "node --import=@nitrogql/esbuild-register ./scripts/build.ts",
+		"clean": "rimraf build coverage",
+		"type:dts": "tsc --emitDeclarationOnly --project tsconfig.build.json",
+		"type:extract": "api-extractor run && rimraf --glob \"./build/*\" && mv trimmed.d.ts build/index.d.ts",
+		"type:check": "tsc --noEmit",
+		"lint": "biome check . --apply-unsafe",
+		"lint:check": "biome ci .",
+		"test": "node --import=@nitrogql/esbuild-register --test \"src/**/*.test.ts\"",
+		"test:watch": "node --import=@nitrogql/esbuild-register --watch --test \"src/**/*.test.ts\"",
+		"test:coverage": "NODE_V8_COVERAGE=./coverage c8 -r html node --import=@nitrogql/esbuild-register --experimental-test-coverage --test \"src/**/*.test.ts\"",
+		"test:setup": "node --import=@nitrogql/esbuild-register ./scripts/test-setup.ts",
+		"spell:check": "cspell \"{README.md,CODE_OF_CONDUCT.md,CONTRIBUTING.md,.github/*.md,src/**/*.ts}\"",
+		"cz": "cz",
+		"semantic-release": "semantic-release"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.6.4",
+		"@microsoft/api-extractor": "^7.43.0",
+		"@nitrogql/esbuild-register": "^1.7.0-beta.2",
+		"@ryansonshine/commitizen": "^4.2.8",
+		"@ryansonshine/cz-conventional-changelog": "^3.3.4",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/commit-analyzer": "^12.0.0",
+		"@semantic-release/github": "^10.0.2",
+		"@semantic-release/npm": "^12.0.0",
+		"@semantic-release/release-notes-generator": "^13.0.0",
+		"@types/node": "^20.11.30",
+		"@types/prompts": "^2.4.9",
+		"c8": "^9.1.0",
+		"cspell": "^8.6.0",
+		"esbuild": "^0.20.2",
+		"prompts": "^2.4.2",
+		"rimraf": "^5.0.5",
+		"semantic-release": "^23.0.7",
+		"slugify": "^1.6.6",
+		"typescript": "^5.4.3"
+	},
+	"dependencies": {
+		"dotenv": "^16.4.5",
+		"drizzle-orm": "^0.30.7",
+		"zod": "^3.22.4"
+	}
+}

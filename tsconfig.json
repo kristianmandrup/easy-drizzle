@@ -1,0 +1,21 @@
+{
+	"include": ["./src/**/*.ts"],
+	"compilerOptions": {
+		"lib": ["es2023"],
+		"module": "ES2022",
+		"target": "es2022",
+		"moduleResolution": "bundler",
+
+		"rootDir": "./src",
+		"outDir": "build",
+
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"sourceMap": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"declaration": true,
+		"resolveJsonModule": true
+	}
+}
