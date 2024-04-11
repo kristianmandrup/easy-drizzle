@@ -19,3 +19,9 @@ export type FieldOptions = {
 	nullable?: boolean;
 	unique?: boolean;
 };
+
+export type TimeStampOpts = NullableOpts;
+export type IntOpts = NullableOpts;
+export type NullableOpts = {
+	nullable?: boolean;
+};

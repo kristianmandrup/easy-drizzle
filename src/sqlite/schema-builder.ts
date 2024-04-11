@@ -5,10 +5,15 @@ import type {
 	SQLiteColumn,
 	SQLiteTableWithColumns,
 } from "drizzle-orm/sqlite-core";
-import { index, integer, text } from "drizzle-orm/sqlite-core";
+import { index, int, integer, text } from "drizzle-orm/sqlite-core";
 
 import { BaseSchemaBuilder } from "../base/schema";
-import { type FieldOptions, Time } from "../types";
+import {
+	type FieldOptions,
+	Time,
+	type TimeStampOpts,
+	type IntOpts,
+} from "../types";
 
 const defaults: Record<Time, unknown> = {
 	[Time.Now]: sql`CURRENT_TIMESTAMP`,
@@ -41,6 +46,26 @@ export interface TableConfig {
 export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 	primary() {
 		return integer("id").primaryKey().notNull();
+	}
+
+	int(name: string, opts: IntOpts = {}) {
+		const num = int(name);
+		if (!opts.nullable) {
+			num.notNull();
+		}
+		return num;
+	}
+
+	timestamp(name: string, opts: TimeStampOpts = {}) {
+		const ts = int(name, { mode: "timestamp" });
+		if (!opts.nullable) {
+			ts.notNull();
+		}
+		return ts;
+	}
+
+	bool(name: string, opts: { default: boolean } = { default: false }) {
+		return int(name, { mode: "boolean" }).notNull().default(opts.default);
 	}
 
 	str(name: string, opts: StrOpts = {}) {
