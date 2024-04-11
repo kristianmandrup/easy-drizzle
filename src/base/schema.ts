@@ -1,3 +1,7 @@
 export class BaseSchemaBuilder {
-  constructor(public tableName: string) {}
+	tableName: string;
+
+	constructor(tableName: string) {
+		this.tableName = tableName;
+	}
 }

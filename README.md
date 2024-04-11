@@ -61,7 +61,34 @@ createPostgresClient(createDb, { verbose: true });
 
 ## <a name='Buildingschemas'></a>Building schemas
 
-Sqlite sample using schema builer
+A Schema builder can be used to faciliate building consistent schemas across the various drizzle ORM adapters. Each builders exposes an API that is almost identical so that minimal change is required to build a schema for another ORM adapter.
+
+Sample sqlite schema builder methods
+
+```ts
+// primary key
+primary(type: FieldKeyType = "int")
+
+// primitive types
+int(name: string, opts: IntOpts = {})
+bool(name: string, opts: BoolOpts)
+str(name: string, opts?: StrOpts)
+text(name: string, opts?: StrOpts)
+
+// time
+timestamp(name: string, opts: TimeStampOpts = {})
+timestampMs(name: string, opts: TimeStampOpts = {})
+dateTime(name: string, opts: DateTimeOpts = {})
+
+// build relationships
+relation(table: Table, type: FieldKeyType = "int")
+oneToMany(parentTable: Table, childTable: Table, foreignKeyName: string)
+
+// to build indexes for each named field
+indexFor(...names: string[])
+```
+
+Sqlite sample using schema builder
 
 ```ts
 import { relations } from "drizzle-orm";

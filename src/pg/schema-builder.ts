@@ -5,10 +5,24 @@ import type {
 	PgTableWithColumns,
 } from "drizzle-orm/pg-core";
 import type { IndexBuilderOn, PgTimestampConfig } from "drizzle-orm/pg-core";
-import { index, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	index,
+	integer,
+	serial,
+	timestamp,
+	varchar,
+	text,
+} from "drizzle-orm/pg-core";
 
 import { BaseSchemaBuilder } from "../base/schema";
-import { type FieldOptions, Time } from "../types";
+import {
+	type FieldOptions,
+	Time,
+	type IntOpts,
+	type TimeStampOpts,
+	type BoolOpts,
+} from "../types";
 
 type StrFieldOptions = FieldOptions & {
 	length: number;
@@ -16,12 +30,12 @@ type StrFieldOptions = FieldOptions & {
 
 export type StrOpts = number | StrFieldOptions;
 
-export type TimeOpts = PgTimestampConfig & {
+export type DateTimeOpts = PgTimestampConfig & {
 	default?: Time;
 	nullable?: boolean;
 };
 
-const defaults: Record<Time, unknown> = {
+const timeDefaults: Record<Time, unknown> = {
 	[Time.Now]: sql`NOW()`,
 };
 
@@ -30,17 +44,6 @@ const defaults: Record<Time, unknown> = {
 type Table = PgTableWithColumns<any>;
 
 export class PgSchemaBuilder extends BaseSchemaBuilder {
-	relation(table: Table) {
-		const field = serial(`${this.tableName}_id`);
-		if (table.id) {
-			// biome-ignore lint/style/noNonNullAssertion: <explanation>
-			field.references(() => table.id!, {
-				onDelete: "cascade",
-			});
-		}
-		return field;
-	}
-
 	primary() {
 		return serial("serial").primaryKey().notNull();
 	}
@@ -57,19 +60,50 @@ export class PgSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	dateTime(
-		name: string,
-		opts: TimeOpts = { precision: 6, withTimezone: true },
-	) {
-		const ts = timestamp(name, { precision: 6, withTimezone: true });
+	text(name: string) {
+		return text(name);
+	}
+
+	int(name: string, opts: IntOpts = {}) {
+		const num = integer(name);
+		if (!opts.nullable) {
+			num.notNull();
+		}
+		return num;
+	}
+
+	bool(name: string, opts: BoolOpts) {
+		const defaultVal = opts === undefined ? false : opts.default;
+		return boolean(name).notNull().default(defaultVal);
+	}
+
+	timestamp(name: string, opts: TimeStampOpts) {
+		const options = this.createTimeOpts(opts, { withTimezone: false });
+		return this.dateTime(name, options);
+	}
+
+	dateTime(name: string, opts: DateTimeOpts = {}) {
+		const options = this.createTimeOpts(opts);
+		const ts = timestamp(name, options);
 		if (!opts.nullable) {
 			ts.notNull();
 		}
 		if (opts.default) {
-			const td = defaults[opts.default];
+			const td = timeDefaults[opts.default];
 			ts.default(td);
 		}
 		return ts;
+	}
+
+	relation(table: Table) {
+		const field = serial(`${this.tableName}_id`);
+		if (table.id) {
+			// biome-ignore lint/style/noNonNullAssertion: <explanation>
+			field.references(() => table.id!, {
+				onDelete: "cascade",
+			});
+		}
+		return field;
 	}
 
 	indexFor(...names: string[]) {
@@ -87,13 +121,31 @@ export class PgSchemaBuilder extends BaseSchemaBuilder {
 			}, {});
 	}
 
-	oneToMany(parentTable: Table, childTable: Table) {
+	oneToMany(parentTable: Table, childTable: Table, foreignKeyName: string) {
 		relations(childTable, ({ one }) => ({
 			user: one(parentTable, {
-				fields: [childTable.userId],
+				fields: [childTable[foreignKeyName]],
 
 				references: [parentTable.id],
 			}),
 		}));
+	}
+
+	protected createTimeOpts(
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		opts: any,
+		defaults: { precision?: number; withTimezone?: boolean } = {
+			precision: 6,
+			withTimezone: true,
+		},
+	) {
+		const timeOpts = {
+			precision: opts.precision,
+			withTimezone: opts.withTimezone,
+		};
+		return {
+			...defaults,
+			...timeOpts,
+		};
 	}
 }

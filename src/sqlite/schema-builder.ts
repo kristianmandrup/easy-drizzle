@@ -14,9 +14,10 @@ import {
 	type TimeStampOpts,
 	type IntOpts,
 	type FieldKeyType,
+	type BoolOpts,
 } from "../types";
 
-const defaults: Record<Time, unknown> = {
+const timeDefaults: Record<Time, unknown> = {
 	[Time.Now]: sql`CURRENT_TIMESTAMP`,
 };
 
@@ -26,9 +27,9 @@ type StrFieldOptions = FieldOptions & {
 	enum?: readonly string[] | string[];
 };
 
-export type StrOpts = number | StrFieldOptions;
+export type StrOpts = undefined | number | StrFieldOptions;
 
-export type TimeOpts = {
+export type DateTimeOpts = {
 	default?: Time;
 	nullable?: boolean;
 };
@@ -59,6 +60,28 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 		return num;
 	}
 
+	bool(name: string, opts?: BoolOpts) {
+		const defaultVal = opts === undefined ? false : opts.default;
+		return int(name, { mode: "boolean" }).notNull().default(defaultVal);
+	}
+
+	str(name: string, opts?: StrOpts) {
+		const strOpts = this.createStrOpts(opts);
+		const s = opts === undefined ? text(name) : text(name, strOpts);
+		if (!strOpts.nullable) {
+			s.notNull();
+		}
+		if (strOpts.unique) {
+			s.unique();
+		}
+
+		return s;
+	}
+
+	text(name: string, opts?: StrOpts) {
+		return this.str(name, opts || { length: -1 });
+	}
+
 	timestamp(name: string, opts: TimeStampOpts = {}) {
 		const ts = int(name, { mode: "timestamp" });
 		if (!opts.nullable) {
@@ -75,27 +98,16 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 		return ts;
 	}
 
-	bool(name: string, opts: { default: boolean } = { default: false }) {
-		return int(name, { mode: "boolean" }).notNull().default(opts.default);
-	}
-
-	str(name: string, opts: StrOpts = {}) {
-		const strOpts: StrOpts = typeof opts === "number" ? { length: opts } : opts;
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		const $opts: any = {
-			mode: strOpts.mode,
-			enum: strOpts.enum,
-			length: strOpts.length,
-		};
-		const s = text(name, $opts);
-		if (!strOpts.nullable) {
-			s.notNull();
+	dateTime(name: string, opts: DateTimeOpts = {}) {
+		const ts = text(name);
+		if (!opts.nullable) {
+			ts.notNull();
 		}
-		if (strOpts.unique) {
-			s.unique();
+		if (opts.default) {
+			const td = timeDefaults[opts.default];
+			ts.default(td);
 		}
-
-		return s;
+		return ts;
 	}
 
 	relation(table: Table, type: FieldKeyType = "int") {
@@ -110,18 +122,6 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 			});
 		}
 		return field;
-	}
-
-	dateTime(name: string, opts: TimeOpts = {}) {
-		const ts = text(name);
-		if (!opts.nullable) {
-			ts.notNull();
-		}
-		if (opts.default) {
-			const td = defaults[opts.default];
-			ts.default(td);
-		}
-		return ts;
 	}
 
 	indexFor(...names: string[]) {
@@ -139,13 +139,25 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 			}, {});
 	}
 
-	oneToMany(parentTable: Table, childTable: Table) {
+	oneToMany(parentTable: Table, childTable: Table, foreignKeyName: string) {
 		relations(childTable, ({ one }) => ({
 			user: one(parentTable, {
-				fields: [childTable.userId],
+				fields: [childTable[foreignKeyName]],
 
 				references: [parentTable.id],
 			}),
 		}));
+	}
+
+	protected createStrOpts(opts: StrOpts = {}) {
+		const strOpts: StrOpts = typeof opts === "number" ? { length: opts } : opts;
+		const length = strOpts.length === -1 ? undefined : strOpts.length || 255;
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		const $opts: any = {
+			mode: strOpts.mode,
+			enum: strOpts.enum,
+			length,
+		};
+		return $opts;
 	}
 }

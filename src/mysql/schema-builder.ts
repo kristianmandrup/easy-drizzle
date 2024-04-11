@@ -4,41 +4,51 @@ import type {
 	IndexColumn,
 	MySqlDatetimeConfig,
 	MySqlTableWithColumns,
+	MySqlTimestampConfig,
 } from "drizzle-orm/mysql-core";
-import { datetime, index, int, text } from "drizzle-orm/mysql-core";
+import {
+	boolean,
+	datetime,
+	index,
+	int,
+	text,
+	timestamp,
+} from "drizzle-orm/mysql-core";
 
 import { BaseSchemaBuilder } from "../base/schema";
-import { type FieldOptions, Time } from "../types";
+import {
+	type FieldOptions,
+	Time,
+	type FieldKeyType,
+	type IntOpts,
+	type BoolOpts,
+} from "../types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 type Table = MySqlTableWithColumns<any>;
 
-export type TimeOpts = MySqlDatetimeConfig &
+export type DateTimeOpts = MySqlDatetimeConfig &
 	FieldOptions & {
 		default?: Time;
 		nullable?: boolean;
 	};
 
-const defaults: Record<Time, unknown> = {
+export type TimeStampOpts = MySqlTimestampConfig &
+	FieldOptions & {
+		default?: Time;
+		nullable?: boolean;
+	};
+
+const timeDefaults: Record<Time, unknown> = {
 	[Time.Now]: sql`CURRENT_TIMESTAMP(6)`,
 };
 
 export class MySqlSchemaBuilder extends BaseSchemaBuilder {
-	static time: Time;
-
-	relation(table: Table) {
-		const field = int(`${this.tableName}_id`);
-		if (table.id) {
-			field.references(() => table.id, {
-				onDelete: "cascade",
-			});
-		}
-		return field;
-	}
-
-	primary() {
-		return int("id").primaryKey().autoincrement().notNull();
+	primary(type: FieldKeyType = "int") {
+		const pr = type === "int" ? int("id").autoincrement() : text("id");
+		pr.primaryKey().notNull();
+		return pr;
 	}
 
 	str(name: string, opts: FieldOptions = {}) {
@@ -52,13 +62,42 @@ export class MySqlSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	dateTime(name: string, opts: TimeOpts = { fsp: 6 }) {
+	text(name: string, opts: FieldOptions = {}) {
+		return this.str(name, opts);
+	}
+
+	int(name: string, opts: IntOpts = {}) {
+		const num = int(name);
+		if (!opts.nullable) {
+			num.notNull();
+		}
+		return num;
+	}
+
+	bool(name: string, opts: BoolOpts) {
+		const defaultVal = opts === undefined ? false : opts.default;
+		return boolean(name).notNull().default(defaultVal);
+	}
+
+	timestamp(name: string, opts: TimeStampOpts = { fsp: 6 }) {
+		const ts = timestamp(name, opts);
+		if (!opts.nullable) {
+			ts.notNull();
+		}
+		if (opts.default) {
+			const td = timeDefaults[opts.default];
+			ts.default(td);
+		}
+		return ts;
+	}
+
+	dateTime(name: string, opts: DateTimeOpts = { fsp: 6 }) {
 		const ts = datetime(name, opts);
 		if (!opts.nullable) {
 			ts.notNull();
 		}
 		if (opts.default) {
-			const td = defaults[opts.default];
+			const td = timeDefaults[opts.default];
 			ts.default(td);
 		}
 		return ts;
@@ -79,10 +118,20 @@ export class MySqlSchemaBuilder extends BaseSchemaBuilder {
 			}, {});
 	}
 
-	oneToMany(parentTable: Table, childTable: Table) {
+	relation(table: Table) {
+		const field = int(`${this.tableName}_id`);
+		if (table.id) {
+			field.references(() => table.id, {
+				onDelete: "cascade",
+			});
+		}
+		return field;
+	}
+
+	oneToMany(parentTable: Table, childTable: Table, foreignKeyName: string) {
 		relations(childTable, ({ one }) => ({
 			user: one(parentTable, {
-				fields: [childTable.userId],
+				fields: [childTable[foreignKeyName]],
 
 				references: [parentTable.id],
 			}),

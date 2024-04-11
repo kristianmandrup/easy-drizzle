@@ -1,6 +1,6 @@
 {
 	"name": "easy-drizzle",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "Utility pack to make drizzle more convenient to use and configure",
 	"homepage": "https://github.com/kristianmandrup/easy-drizzle",
 	"bugs": "https://github.com/kristianmandrup/easy-drizzle/issues",

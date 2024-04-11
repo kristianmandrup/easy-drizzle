@@ -21,6 +21,11 @@ export type FieldOptions = {
 };
 
 export type FieldKeyType = "int" | "str";
+export type BoolOpts = { default: boolean };
+export type TimeOpts = {
+	default?: Time;
+	nullable?: boolean;
+};
 export type TimeStampOpts = NullableOpts;
 export type IntOpts = NullableOpts;
 export type NullableOpts = {
