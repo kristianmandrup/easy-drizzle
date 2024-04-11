@@ -78,7 +78,7 @@ export const usersTable = sqliteTable(
     firstName: builder.str("first_name"),
     lastName: builder.str("last_name"),
     email: builder.str("email"),
-    createdAt: builder.timeDate("created_at", { default: Time.Now }),
+    createdAt: builder.dateTime("created_at", { default: Time.Now }),
   },
   builder.indexFor("first_name", "last_name", "email")
 );
@@ -97,7 +97,7 @@ export const postsTable = sqliteTable(
     userId: builder.relation(usersTable),
     title: builder.str("title"),
     content: builder.str("content"),
-    createdAt: builder.timeDate("created_at", { default: Time.Now }),
+    createdAt: builder.dateTime("created_at", { default: Time.Now }),
   },
   builder.indexFor("id", "user_id", "title", "content")
 );

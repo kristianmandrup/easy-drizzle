@@ -13,6 +13,7 @@ import {
 	Time,
 	type TimeStampOpts,
 	type IntOpts,
+	type FieldKeyType,
 } from "../types";
 
 const defaults: Record<Time, unknown> = {
@@ -44,12 +45,14 @@ export interface TableConfig {
 }
 
 export class SqliteSchemaBuilder extends BaseSchemaBuilder {
-	primary() {
-		return integer("id").primaryKey().notNull();
+	primary(type: FieldKeyType = "int") {
+		const pr = type === "int" ? integer("id", { mode: "number" }) : text("id");
+		pr.primaryKey({ autoIncrement: true }).notNull();
+		return pr;
 	}
 
 	int(name: string, opts: IntOpts = {}) {
-		const num = int(name);
+		const num = int(name, { mode: "number" });
 		if (!opts.nullable) {
 			num.notNull();
 		}
@@ -58,6 +61,14 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 
 	timestamp(name: string, opts: TimeStampOpts = {}) {
 		const ts = int(name, { mode: "timestamp" });
+		if (!opts.nullable) {
+			ts.notNull();
+		}
+		return ts;
+	}
+
+	timestampMs(name: string, opts: TimeStampOpts = {}) {
+		const ts = int(name, { mode: "timestamp_ms" });
 		if (!opts.nullable) {
 			ts.notNull();
 		}
@@ -87,8 +98,10 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	relation(table: Table) {
-		const field = integer(`${this.tableName}_id`);
+	relation(table: Table, type: FieldKeyType = "int") {
+		const name = `${this.tableName}_id`;
+		const field =
+			type === "int" ? integer(name, { mode: "number" }) : text(name);
 
 		if (table.id) {
 			// biome-ignore lint/style/noNonNullAssertion: <explanation>
@@ -99,7 +112,7 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 		return field;
 	}
 
-	timeDate(name: string, opts: TimeOpts = {}) {
+	dateTime(name: string, opts: TimeOpts = {}) {
 		const ts = text(name);
 		if (!opts.nullable) {
 			ts.notNull();

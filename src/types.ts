@@ -20,6 +20,7 @@ export type FieldOptions = {
 	unique?: boolean;
 };
 
+export type FieldKeyType = "int" | "str";
 export type TimeStampOpts = NullableOpts;
 export type IntOpts = NullableOpts;
 export type NullableOpts = {

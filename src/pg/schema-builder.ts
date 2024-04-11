@@ -57,7 +57,7 @@ export class PgSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	timeDate(
+	dateTime(
 		name: string,
 		opts: TimeOpts = { precision: 6, withTimezone: true },
 	) {

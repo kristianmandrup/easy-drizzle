@@ -52,7 +52,7 @@ export class MySqlSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	timeDate(name: string, opts: TimeOpts = { fsp: 6 }) {
+	dateTime(name: string, opts: TimeOpts = { fsp: 6 }) {
 		const ts = datetime(name, opts);
 		if (!opts.nullable) {
 			ts.notNull();
