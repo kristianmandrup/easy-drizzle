@@ -73,18 +73,19 @@ primary(type: FieldKeyType = "int")
 int(name: string, opts: IntOpts = {})
 bool(name: string, opts: BoolOpts)
 str(name: string, opts?: StrOpts)
-text(name: string, opts?: StrOpts)
+text(name: string, opts?: TextOpts)
+json(name: string, opts?: JsonOpts)
 
-// time
+// time & date
 timestamp(name: string, opts: TimeStampOpts = {})
 timestampMs(name: string, opts: TimeStampOpts = {})
 dateTime(name: string, opts: DateTimeOpts = {})
 
-// build relationships
+// table relationships
 relation(table: Table, type: FieldKeyType = "int")
 oneToMany(parentTable: Table, childTable: Table, foreignKeyName: string)
 
-// to build indexes for each named field
+// create table indexes for each named field
 indexFor(...names: string[])
 ```
 

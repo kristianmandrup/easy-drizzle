@@ -16,6 +16,7 @@ import {
 	type FieldKeyType,
 	type BoolOpts,
 } from "../types";
+import { isObject } from "../utils/helpers";
 
 const timeDefaults: Record<Time, unknown> = {
 	[Time.Now]: sql`CURRENT_TIMESTAMP`,
@@ -27,7 +28,19 @@ type StrFieldOptions = FieldOptions & {
 	enum?: readonly string[] | string[];
 };
 
-export type StrOpts = undefined | number | StrFieldOptions;
+type TextFieldOptions = FieldOptions & {
+	mode?: "text" | "json";
+	length?: number;
+};
+
+type JsonFieldOptions = FieldOptions & {
+	mode?: "json";
+	length?: number;
+};
+
+export type StrOpts = number | StrFieldOptions;
+export type TextOpts = number | TextFieldOptions;
+export type JsonOpts = number | JsonFieldOptions;
 
 export type DateTimeOpts = {
 	default?: Time;
@@ -78,8 +91,40 @@ export class SqliteSchemaBuilder extends BaseSchemaBuilder {
 		return s;
 	}
 
-	text(name: string, opts?: StrOpts) {
-		return this.str(name, opts || { length: -1 });
+	text(name: string, opts?: TextOpts) {
+		const defaults: TextFieldOptions = { length: -1, nullable: true };
+		if (opts === undefined) {
+			return this.str(name, defaults);
+		}
+		if (isObject(opts)) {
+			const options = {
+				...defaults,
+				...(opts as object),
+			};
+			options.mode = "text";
+			return this.str(name, options);
+		}
+		return this.str(name, opts);
+	}
+
+	json(name: string, opts?: JsonOpts) {
+		const defaults: JsonOpts = {
+			length: -1,
+			nullable: true,
+			mode: "json",
+		};
+		if (opts === undefined) {
+			return this.text(name, defaults);
+		}
+		if (isObject(opts)) {
+			const options = {
+				...defaults,
+				...(opts as object),
+			};
+			options.mode = "json";
+			return this.str(name, options);
+		}
+		return this.str(name, opts);
 	}
 
 	timestamp(name: string, opts: TimeStampOpts = {}) {
